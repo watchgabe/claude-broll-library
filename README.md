@@ -11,8 +11,7 @@ You need: a Mac, Google Chrome, the Claude app (Code tab) or Claude Code, and yo
 ```
 Install the B-roll Library skill from https://github.com/watchgabe/claude-broll-library and run it for me.
 
-1. Clone the repo into ~/Developer/claude-broll-library (or pull it if it's already there). If GitHub asks for a login, install
-   the GitHub CLI (brew install gh), run gh auth login with me, then clone with gh repo clone.
+1. Clone the repo into ~/Developer/claude-broll-library (or pull it if it's already there).
 2. Copy skills/broll-library into ~/.claude/skills/broll-library so it's there in every session.
 3. Check ffmpeg and uv. If either is missing, install them with Homebrew (brew install ffmpeg uv). If Homebrew is missing, give me
    the one command to paste into Terminal and wait for me.

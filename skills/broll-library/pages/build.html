@@ -242,7 +242,7 @@ function summary() {
   const lines = [`B-roll build: ${picks.length} clips`, ""];
   picks.forEach((p, i) => {
     const e = edits[p] || fresh(p);
-    lines.push(`${i + 1}. ${p}` + (e.by === "you" ? "  (changed by Gabe)" : e.by === "claude" ? "  (Claude's pick, not changed)" : ""));
+    lines.push(`${i + 1}. ${p}` + (e.by === "you" ? "  (changed by you)" : e.by === "claude" ? "  (Claude's pick, not changed)" : ""));
     if (e.skip) { lines.push("   Skip" + (FIRST[p] && e.by === "claude" ? ": " + FIRST[p].why : "")); lines.push(""); return; }
     lines.push("   Keep: " + (e.keep.length ? e.keep.map(([a, b]) => `${a.toFixed(2)}–${b.toFixed(2)} s`).join(", ") : "whole clip"));
     lines.push("   Grade: " + (e.grade ? "yes, LUT" : "no"));
