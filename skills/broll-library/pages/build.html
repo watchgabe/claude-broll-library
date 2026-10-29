@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B-Roll Review</title>
+<style>
+:root{--bg:#0d0e10;--card:#17181b;--field:#212328;--ink:#eceef0;--ink-2:#c0c2c6;--mute:#818489;--line:#2b2d32;--hover:#1e2024;--tile:#2a2d33;--r:7px;
+  --keep:#6fdca8;--keep-soft:rgba(111,220,168,.28);--sel:#4aa3ff;
+  --font:'Mona Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 var(--font);display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:8px;padding:0 16px;height:56px;border-bottom:1px solid var(--line);flex:none}
+h1{margin:0;font-size:15px;font-weight:600}
+.sub{color:var(--mute);margin-left:8px}
+.sp{flex:1}
+button,input[type=text],select{height:34px;font:13px var(--font);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:0 16px;cursor:pointer}
+button:hover{background:var(--hover)}
+button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.sm{height:24px;padding:0 8px;font-size:12px}
+.wrap{flex:1;display:flex;min-height:0}
+aside{width:296px;flex:none;border-right:1px solid var(--line);overflow-y:auto;padding:8px}
+.it{display:flex;gap:8px;align-items:center;padding:8px;border-radius:var(--r);cursor:pointer;border:1px solid transparent}
+.it:hover{background:var(--hover)}
+.it.on{background:var(--tile);border-color:#4a4e55}
+.it img{width:96px;height:54px;object-fit:cover;border-radius:4px;background:#000;flex:none}
+.it .t{min-width:0;flex:1}
+.it .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .f{color:var(--mute);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .s{font-size:11px;color:var(--ink-2)}
+.it .s.done{color:var(--keep)}.it .s.skip{color:var(--mute);text-decoration:line-through}
+main{flex:1;min-width:0;overflow-y:auto;padding:16px 24px}
+.title{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.title .n{font-size:15px;font-weight:600}
+.title .p{color:var(--mute);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.vid{background:#000;border-radius:var(--r);overflow:hidden;display:flex;justify-content:center}
+video{display:block;width:100%;max-height:56vh;background:#000}
+.tl{position:relative;height:56px;margin-top:8px;border-radius:var(--r);overflow:hidden;background:#000 center/100% 100% no-repeat;cursor:pointer;user-select:none}
+.tl .dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.tl .rg{position:absolute;top:0;bottom:0;background:var(--keep-soft);border-left:2px solid var(--keep);border-right:2px solid var(--keep);cursor:grab}
+.tl .rg.sel{background:rgba(111,220,168,.42);box-shadow:inset 0 0 0 2px #fff}
+.tl .rg .h{position:absolute;top:0;bottom:0;width:12px;cursor:ew-resize}.tl .rg .h.l{left:-7px}.tl .rg .h.r{right:-7px}
+.tl .rg .h::after{content:"";position:absolute;left:4px;top:16px;bottom:16px;width:4px;border-radius:2px;background:var(--keep)}
+.tl .rg .rx{position:absolute;top:4px;right:8px;width:20px;height:20px;padding:0;border:0;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;line-height:20px;display:none;cursor:pointer}
+.tl .rg:hover .rx,.tl .rg.sel .rx{display:block}
+.tl.dragging,.tl.dragging .rg{cursor:grabbing}
+.tl .pend{position:absolute;top:0;bottom:0;background:rgba(74,163,255,.25);border-left:2px solid var(--sel)}
+.tl .ph{position:absolute;top:0;bottom:0;width:2px;background:#fff;margin-left:-1px;pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.tc{font-variant-numeric:tabular-nums;color:var(--ink-2);min-width:120px}
+.kbd{color:var(--mute);font-size:11px}
+.sec{margin-top:16px}
+.sec h3{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);font-variant-numeric:tabular-nums}
+.chip .go{cursor:pointer}.chip .go:hover{text-decoration:underline}
+a.src{color:var(--ink-2);font-size:12px;white-space:nowrap}a.src:hover{color:var(--ink)}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;padding:2px;background:var(--field)}
+.seg button{height:24px;border:0;border-radius:6px;background:none;padding:0 8px;font-size:12px;color:var(--ink-2)}
+.seg button.on{background:#383c43;color:var(--ink)}
+.chip .x{cursor:pointer;color:var(--mute);border:0;background:none;padding:0;height:auto}
+.none{color:var(--mute)}
+.why{color:var(--ink-2);margin:0 0 8px}.why b{color:var(--ink)}
+.it .s.mine{color:var(--sel)}
+label.ck{display:flex;gap:8px;align-items:center;color:var(--ink-2);cursor:pointer;height:32px}
+label.ck input{width:16px;height:16px;margin:0;accent-color:#eceef0}
+textarea{width:100%;min-height:96px;font:13px/1.5 var(--font);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:8px;resize:vertical}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:var(--r);display:none}
+</style></head><body>
+<header>
+  <h1>Review Claude's picks</h1><span class="sub" id="sub"></span><span class="sp"></span>
+  <button id="copyAll">Copy all edits</button>
+  <button class="pri" id="saveFile">Done: save for Claude →</button>
+</header>
+<div class="wrap">
+  <aside id="list"></aside>
+  <main id="main"></main>
+</div>
+<div id="toast"></div>
+<script>
+const META = /*META*/null;      // {path: {dur, proxy, graded, strip, gamma, log}}, filled in by broll.py build
+const DEFAULT_PICKS = /*PICKS*/null;
+const FIRST = /*FIRST*/null;
+const PROFILE = { "s-log3": "S-Log3", "s-log3-cine": "S-Log3-Cine", "s-log2": "S-Log2", "s-cinetone": "S-Cinetone", "rec709": "Rec709", "hlg": "HLG", "hlg3": "HLG3", "nxcam-still": "a still-camera mode" };
+const CAM = Object.fromEntries(Object.entries(META).map(([p, m]) => [p, { gamma: PROFILE[(m.gamma || "").toLowerCase()] || m.gamma, lut: m.log }]));      // {path: {gamma: the picture profile the camera wrote, lut: whether it needs the LUT}}      // Claude's first pass: {path: {keep, skip, why}}
+const $ = s => document.querySelector(s);
+const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+             set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const picks = DEFAULT_PICKS;
+const KEY = "brollEdits:" + picks.length + ":" + (picks[0] || "");
+const edits = LS.get(KEY, {});      // {path: {keep: [[in, out]], grade: bool, notes: "", skip: bool}}
+const save = () => LS.set(KEY, edits);
+for (const [p, e] of Object.entries(edits)) if (e.by !== "you") delete edits[p];      // only what you changed is kept; everything else comes from Claude's latest pass      // opened, never marked: Claude's pass shows
+const fresh = p => { const f = FIRST[p]; return { keep: f ? f.keep.map(x => [...x]) : [], grade: CAM[p] ? CAM[p].lut : /^(C\d{4})/i.test(p.split("/").pop()), notes: "", skip: f ? !!f.skip : false, by: f ? "claude" : "" }; };
+const ed = p => edits[p] || (edits[p] = fresh(p));
+const url = p => "file://" + p.split("/").map(encodeURIComponent).join("/");
+const name = p => p.split("/").pop();
+const tc = s => { if (s == null || isNaN(s)) return "–"; const m = Math.floor(s / 60), r = s - m * 60; return m + ":" + r.toFixed(1).padStart(4, "0"); };
+let cur = 0, pendIn = null, sel = null, look = "graded";      // look: which preview the player shows, graded (the LUT the export uses) or log      // sel: the selected part on the timeline
+$("#sub").textContent = `${picks.length} clips · mark the parts to keep, tick grade, add notes. It saves as you go.`;
+function status(p) {
+  const e = edits[p] || (FIRST[p] ? fresh(p) : null); if (!e) return ["", "Not marked yet"];
+  const who = e.by === "you" ? "You" : e.by === "claude" ? "Claude" : "";
+  if (e.skip) return ["skip", (who ? who + ": " : "") + "skip"];
+  const n = e.keep.length; if (!n && !e.notes.trim()) return ["", "Not marked yet"];
+  return [e.by === "you" ? "mine" : "done", (who ? who + ": " : "") + (n ? `${n} part${n > 1 ? "s" : ""}` : "notes only") + (e.grade ? " · grade" : "")];
+}
+function list() {
+  const L = $("#list"); L.innerHTML = "";
+  picks.forEach((p, i) => {
+    const m = META[p] || {}, [cls, txt] = status(p), d = document.createElement("div");
+    d.className = "it" + (i === cur ? " on" : "");
+    d.innerHTML = `${m.strip ? `<img src="${m.strip}" style="object-position:0 0">` : `<img>`}<div class="t"><div class="n"></div><div class="f"></div><div class="s ${cls}"></div></div>`;
+    d.querySelector(".n").textContent = name(p); d.querySelector(".f").textContent = p.split("/").slice(3, -1).join("/") || p;
+    d.querySelector(".s").textContent = txt + (m.dur ? " · " + tc(m.dur) : "");
+    d.onclick = () => show(i);
+    L.appendChild(d);
+  });
+  L.children[cur]?.scrollIntoView({ block: "nearest" });
+}
+function show(i) {
+  if (i < 0 || i >= picks.length) return; cur = i; pendIn = null; sel = null;
+  const p = picks[i], m = META[p] || {}, e = ed(p);
+  $("#main").innerHTML = `
+    <div class="title"><span class="n"></span><span class="p" title="The original file. You are scrubbing a light copy timed exactly like it."></span><div class="seg" id="look" title="The graded preview uses the same LUT as the export"><button data-v="graded">LUT</button><button data-v="log">No LUT</button></div><button class="sm" id="cpath" title="Paste into Finder: Go to Folder (Shift+Cmd+G)">Copy path</button><a class="src" id="ofold" target="_blank">Folder ↗</a><button class="sm" id="prev">← Prev</button><button class="sm" id="next">Next →</button></div>
+    <div class="vid"><video id="v" controls playsinline muted preload="auto"></video></div>
+    <div class="tl" id="tl"><div class="dim"></div></div>
+    <div class="ctl">
+      <span class="tc" id="tc">0:00.0 / –</span>
+      <button id="bIn">Mark in <span class="kbd">I</span></button>
+      <button id="bOut">Mark out <span class="kbd">O</span></button>
+      <button id="bAll">Keep whole clip</button>
+      <span class="kbd">Drag a green part to move it, its edges to trim · ✕ or Delete removes · Space play · ← → 1 s · Shift+← → 1 frame · N / P next clip</span>
+    </div>
+    <div class="sec"><h3>Parts to keep</h3><div class="why" id="why"></div><div class="chips" id="chips"></div></div>
+    <div class="sec row">
+      <label class="ck"><input type="checkbox" id="grade">Color grade it (your LUT)</label><span class="kbd" id="camg" style="align-self:center"></span>
+      <label class="ck"><input type="checkbox" id="skip">Skip this clip</label>
+    </div>
+    <div class="sec"><h3>Notes for this clip</h3><textarea id="notes" placeholder="e.g. color grade it, take 0:12 to 0:18, slow it down, crop to 9:16, name it 'Laptop at the window'"></textarea></div>`;
+  $("#main .title .n").textContent = name(p); $("#main .title .p").textContent = p; $("#cpath").onclick = () => copyPath(p); $("#ofold").href = url(p.split("/").slice(0, -1).join("/")) + "/";
+  const v = $("#v"); v.muted = true;
+  const src = () => (look === "graded" && e.grade && m.graded) ? m.graded : (m.proxy || url(p));
+  const paint = () => [...$("#look").children].forEach(b => { b.classList.toggle("on", b.dataset.v === (e.grade && m.graded ? look : "log")); b.disabled = !e.grade || !m.graded; });
+  const swap = () => { const t = v.currentTime, playing = !v.paused, s2 = src(); if (v.getAttribute("src") === s2) return paint();
+    v.src = s2; v.addEventListener("loadedmetadata", () => { v.currentTime = t; if (playing) v.play().catch(() => {}); }, { once: true }); paint(); };
+  v.src = src(); paint();
+  $("#look").onclick = ev => { const b = ev.target.closest("button"); if (!b || b.disabled) return; look = b.dataset.v; swap(); };
+  if (m.strip) $("#tl").style.backgroundImage = `url("${m.strip}")`;
+  $("#grade").checked = e.grade;
+  const cg = CAM[p]; $("#camg").textContent = cg ? (cg.gamma ? `Shot in ${cg.gamma}: ` : "No picture profile recorded: ") + (cg.lut ? "log, needs the LUT" : "already has its look, no LUT needed") : ""; $("#skip").checked = e.skip; $("#notes").value = e.notes;
+  $("#grade").onchange = () => { e.grade = $("#grade").checked; e.by = "you"; save(); swap(); list(); };
+  $("#skip").onchange = () => { e.skip = $("#skip").checked; e.by = "you"; save(); list(); };
+  $("#notes").oninput = () => { e.notes = $("#notes").value; e.by = "you"; save(); clearTimeout(show.t); show.t = setTimeout(list, 400); };
+  $("#prev").onclick = () => show(cur - 1); $("#next").onclick = () => show(cur + 1);
+  $("#bIn").onclick = markIn; $("#bOut").onclick = markOut;
+  $("#bAll").onclick = () => { const d = dur(); if (!d) return; e.keep = [[0, +d.toFixed(2)]]; e.by = "you"; save(); draw(); list(); };
+  const f = FIRST[p];
+  if (f) { $("#why").innerHTML = `<b>Claude's pick:</b> <span></span> <button class="sm" id="reset">Back to Claude's pick</button>`; $("#why span").textContent = f.why || "";
+    $("#reset").onclick = () => { edits[p] = fresh(p); save(); show(cur); }; }
+  v.ontimeupdate = v.onseeked = draw;
+  v.addEventListener("loadedmetadata", () => { if (e.keep.length) v.currentTime = e.keep[0][0]; draw(); }, { once: true });
+  v.onloadedmetadata = draw;
+  // the timeline: click or drag empty space to scrub; a green part moves (drag the middle), trims (drag an edge), selects (click), ✕ deletes
+  const tl = $("#tl"); let drag = null;
+  const at = ev => { const r = tl.getBoundingClientRect(); return Math.max(0, Math.min(dur(), (ev.clientX - r.left) / r.width * dur())); };
+  tl.onpointerdown = ev => {
+    const d = dur(); if (!d) return;
+    const rg = ev.target.closest(".rg");
+    if (ev.target.closest(".rx")) { const k = +rg.dataset.k; e.keep.splice(k, 1); sel = null; e.by = "you"; save(); draw(); list(); return; }
+    tl.setPointerCapture(ev.pointerId);
+    if (!rg) { drag = { mode: "seek" }; v.currentTime = at(ev); draw(); return; }
+    const k = +rg.dataset.k, h = ev.target.closest(".h");
+    drag = { mode: h ? (h.classList.contains("l") ? "l" : "r") : "move", k, x0: ev.clientX, t0: at(ev), a: e.keep[k][0], b: e.keep[k][1], moved: false };
+    sel = k; v.pause(); tl.classList.add("dragging"); draw();
+  };
+  tl.onpointermove = ev => {
+    if (!drag) return;
+    if (drag.mode === "seek") { v.currentTime = at(ev); draw(); return; }
+    if (Math.abs(ev.clientX - drag.x0) > 2) drag.moved = true;
+    if (!drag.moved) return;
+    const d = dur(), k = drag.k, lo = k > 0 ? e.keep[k - 1][1] : 0, hi = k < e.keep.length - 1 ? e.keep[k + 1][0] : d, MIN = 1;
+    const dt = at(ev) - drag.t0; let a = drag.a, b = drag.b;
+    if (drag.mode === "move") { const len = b - a; a = Math.max(lo, Math.min(hi - len, a + dt)); b = a + len; v.currentTime = a; }
+    else if (drag.mode === "l") { a = Math.max(lo, Math.min(b - MIN, a + dt)); v.currentTime = a; }
+    else { b = Math.min(hi, Math.max(a + MIN, b + dt)); v.currentTime = b; }
+    e.keep[k] = [+a.toFixed(2), +b.toFixed(2)]; draw();
+  };
+  tl.onpointerup = () => {
+    if (drag && drag.mode !== "seek") {
+      tl.classList.remove("dragging");
+      if (drag.moved) { e.by = "you"; save(); list(); } else v.currentTime = e.keep[drag.k][0];      // a click: jump to its start
+      draw();
+    }
+    drag = null;
+  };
+  draw(); list();
+}
+const dur = () => { const v = $("#v"); return v && isFinite(v.duration) && v.duration ? v.duration : (META[picks[cur]] || {}).dur || 0; };
+function markIn() { pendIn = +$("#v").currentTime.toFixed(2); draw(); }
+function markOut() {
+  const t = +$("#v").currentTime.toFixed(2), e = ed(picks[cur]);
+  const a = pendIn == null ? 0 : pendIn;
+  if (t <= a) { toast("Mark out after the in point"); return; }
+  e.keep.push([a, t]); e.keep.sort((x, y) => x[0] - y[0]); e.skip = false; e.by = "you"; pendIn = null; save(); draw(); list();
+  $("#skip") && ($("#skip").checked = false);
+}
+function draw() {
+  const v = $("#v"), tl = $("#tl"); if (!v || !tl) return;
+  const d = dur(), e = ed(picks[cur]);
+  $("#tc").textContent = `${tc(v.currentTime)} / ${tc(d)}` + (pendIn != null ? ` · in at ${tc(pendIn)}` : "");
+  tl.querySelectorAll(".rg,.pend,.ph").forEach(x => x.remove());
+  if (!d) return;
+  const pc = x => (x / d * 100) + "%";
+  e.keep.forEach(([a, b], k) => { const r = document.createElement("div"); r.className = "rg" + (k === sel ? " sel" : ""); r.dataset.k = k; r.style.left = pc(a); r.style.width = pc(b - a);
+    r.innerHTML = `<i class="h l"></i><i class="h r"></i><button class="rx" title="Delete this part">✕</button>`; tl.appendChild(r); });
+  if (pendIn != null) { const r = document.createElement("div"); r.className = "pend"; r.style.left = pc(pendIn); r.style.width = pc(Math.max(0, v.currentTime - pendIn)); tl.appendChild(r); }
+  const ph = document.createElement("div"); ph.className = "ph"; ph.style.left = pc(v.currentTime); tl.appendChild(ph);
+  const C = $("#chips"); C.innerHTML = "";
+  if (!e.keep.length) C.innerHTML = `<span class="none">None yet. Mark in, then mark out. No parts and no notes means the whole clip as it is.</span>`;
+  e.keep.forEach(([a, b], k) => {
+    const c = document.createElement("span"); c.className = "chip";
+    c.innerHTML = `<span class="go">${tc(a)} → ${tc(b)}</span><span class="kbd">${(b - a).toFixed(1)} s</span><button class="x" title="Remove">✕</button>`;
+    c.querySelector(".go").onclick = () => { v.currentTime = a; v.play().catch(() => {}); };
+    c.querySelector(".x").onclick = () => { e.keep.splice(k, 1); sel = null; e.by = "you"; save(); draw(); list(); };
+    C.appendChild(c);
+  });
+}
+document.addEventListener("keydown", ev => {
+  if (ev.target.tagName === "TEXTAREA" || ev.target.tagName === "INPUT" && ev.target.type === "text") return;
+  const v = $("#v"); if (!v) return;
+  const k = ev.key.toLowerCase(), step = ev.shiftKey ? 1 / 30 : 1;
+  if ((k === "delete" || k === "backspace") && sel != null) { ev.preventDefault(); const e = ed(picks[cur]); e.keep.splice(sel, 1); sel = null; e.by = "you"; save(); draw(); list(); return; }
+  if (k === "escape" && sel != null) { sel = null; draw(); return; }
+  if (k === " ") { ev.preventDefault(); v.paused ? v.play().catch(() => {}) : v.pause(); }
+  else if (k === "i") markIn(); else if (k === "o") markOut();
+  else if (k === "arrowright") { ev.preventDefault(); v.currentTime = Math.min(dur(), v.currentTime + step); }
+  else if (k === "arrowleft") { ev.preventDefault(); v.currentTime = Math.max(0, v.currentTime - step); }
+  else if (k === ".") v.currentTime = Math.min(dur(), v.currentTime + 5); else if (k === ",") v.currentTime = Math.max(0, v.currentTime - 5);
+  else if (k === "n") show(cur + 1); else if (k === "p") show(cur - 1);
+});
+function summary() {
+  const lines = [`B-roll build: ${picks.length} clips`, ""];
+  picks.forEach((p, i) => {
+    const e = edits[p] || fresh(p);
+    lines.push(`${i + 1}. ${p}` + (e.by === "you" ? "  (changed by Gabe)" : e.by === "claude" ? "  (Claude's pick, not changed)" : ""));
+    if (e.skip) { lines.push("   Skip" + (FIRST[p] && e.by === "claude" ? ": " + FIRST[p].why : "")); lines.push(""); return; }
+    lines.push("   Keep: " + (e.keep.length ? e.keep.map(([a, b]) => `${a.toFixed(2)}–${b.toFixed(2)} s`).join(", ") : "whole clip"));
+    lines.push("   Grade: " + (e.grade ? "yes, LUT" : "no"));
+    if (e.notes.trim()) lines.push("   Notes: " + e.notes.trim().replace(/\n+/g, " / "));
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+function copyPath(p) { navigator.clipboard.writeText(p).then(() => toast("Path copied. In Finder press Shift+Cmd+G and paste"), () => toast(p)); }
+function toast(t) { const d = $("#toast"); d.textContent = t; d.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => d.style.display = "none", 1800); }
+$("#copyAll").onclick = () => navigator.clipboard.writeText(summary()).then(() => toast("Copied. Paste it to Claude"), () => toast("Couldn't copy. Use Save edits file"));
+$("#saveFile").onclick = () => {
+  const data = { made: new Date().toISOString(), clips: picks.map(p => ({ path: p, ...(edits[p] || fresh(p)), claude: FIRST[p] || null })) };
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  a.download = "broll-edits.json"; a.click(); toast('Saved. Now tell Claude "edits saved"');
+};
+show(0);
+</script></body></html>

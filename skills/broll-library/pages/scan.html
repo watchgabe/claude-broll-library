@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B-Roll Sorter</title>
+<style>
+:root{--bg:#0d0e10;--card:#17181b;--field:#212328;--ink:#eceef0;--ink-2:#c0c2c6;--mute:#818489;--line:#2b2d32;--hover:#1e2024;--r:7px;
+  --font:'Mona Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 var(--font)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:16px 24px}
+h1{margin:0 0 4px;font-size:16px;font-weight:600}
+.sub{color:var(--mute);font-size:12px;margin-bottom:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=search],select,button{height:34px;font:13px var(--font);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:0 8px}
+input[type=search]{width:280px;max-width:100%}
+select{max-width:320px}
+button{cursor:pointer;padding:0 16px}button:hover{background:var(--hover)}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;padding:2px;background:var(--field)}
+.seg button{height:28px;border:0;border-radius:6px;background:none;padding:0 16px;color:var(--ink-2)}
+.seg button.on{background:#383c43;color:var(--ink)}
+label.ck{display:flex;gap:8px;align-items:center;color:var(--ink-2);cursor:pointer;height:34px}
+label.ck input,.pick input{width:16px;height:16px;margin:0;flex:none;accent-color:#eceef0;cursor:pointer}
+.count{margin-left:auto;color:var(--mute)}
+main{padding:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:16px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.c.kept{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.top{display:flex;align-items:center;gap:8px;padding:8px;height:40px}
+.pick{display:flex;gap:8px;align-items:center;min-width:0;cursor:pointer;flex:1}
+.nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{flex:none;font-size:11px;color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.th{display:block;width:100%;aspect-ratio:64/9;background:#000;cursor:pointer;position:relative}
+.th img{width:100%;height:100%;object-fit:contain;display:block}
+.th .none{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute)}
+a.src{color:var(--ink-2);font-size:12px;white-space:nowrap;flex:none}a.src:hover{color:var(--ink)}
+.meta{padding:8px;color:var(--mute);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{grid-column:1/-1;justify-self:center}
+.empty{grid-column:1/-1;color:var(--mute);padding:40px;text-align:center}
+#big{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;z-index:9;align-items:center;justify-content:center;padding:40px}
+#big.on{display:flex}
+#big .box{max-width:1200px;width:100%}
+#big video{width:100%;max-height:75vh;background:#000;border-radius:var(--r)}
+#big .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+#big .row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:600px){main{grid-template-columns:1fr;padding:16px}header{padding:16px}}
+</style></head><body>
+<header>
+  <h1>Your footage</h1>
+  <div class="sub" id="sub"></div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="Search file or folder name">
+    <select id="top"></select>
+    <select id="folder"></select>
+    <div class="seg" id="src"><button data-v="all" class="on">All clips</button><button data-v="kept">Checked</button></div>
+    <select id="sort"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="folder">By folder</option><option value="long">Longest first</option></select>
+    <label class="ck"><input type="checkbox" id="cam" checked>Camera originals only</label>
+    <button id="copy">Copy checked list</button>
+    <button id="build" style="background:#eceef0;color:#0d0e10;border-color:#eceef0">Save picks for Claude →</button>
+    <span class="count" id="count"></span>
+  </div>
+</header>
+<main id="grid"></main>
+<div id="big"><div class="box"><video id="bv" controls playsinline muted></video>
+  <div class="row"><div class="t" id="bn"></div>
+  <label class="ck"><input type="checkbox" id="bck">Check</label><button id="bprev">← Prev</button><button id="bnext">Next →</button><button id="bx">Close</button></div></div></div>
+<script>
+const DATA = /*DATA*/null;      // filled in by broll.py scan
+const $ = s => document.querySelector(s);
+const KEY = "brollChecked:" + DATA.root;
+let kept = new Set(); try { kept = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...kept])); } catch (e) {} };
+const fmt = s => !s ? "" : s >= 3600 ? Math.floor(s / 3600) + ":" + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + ":" + String(Math.round(s % 60)).padStart(2, "0")
+  : Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
+const gb = b => b >= 1e9 ? (b / 1e9).toFixed(1) + " GB" : Math.round(b / 1e6) + " MB";
+const url = p => "file://" + p.split("/").map(encodeURIComponent).join("/");
+const items = DATA.items.filter(i => !i.err);
+$("#sub").textContent = `${items.length} clips in ${DATA.root}. Scanned ${DATA.when}. Each strip is 4 frames from start to end. Tick the clips that have B-roll in them, then press Save picks for Claude.`;
+const tops = [...new Set(items.map(i => i.top))].sort();
+$("#top").innerHTML = `<option value="">Every top folder</option>` + tops.map(t => `<option>${t}</option>`).join("");
+function folders() {
+  const t = $("#top").value, f = [...new Set(items.filter(i => !t || i.top === t).map(i => i.folder))].sort(), was = $("#folder").value;
+  $("#folder").innerHTML = `<option value="">Every folder</option>` + f.map(x => `<option>${x.replace(/</g, "&lt;")}</option>`).join("");
+  if (f.includes(was)) $("#folder").value = was;
+}
+let src = "all", list = [], shown = 0, cur = -1;
+const PAGE = 120;
+function render() {
+  const q = $("#q").value.toLowerCase().trim(), t = $("#top").value, fo = $("#folder").value, so = $("#sort").value;
+  const cam = $("#cam").checked;
+  list = items.filter(i => (src !== "kept" || kept.has(i.p)) && (!t || i.top === t) && (!fo || i.folder === fo) && (!cam || i.cam)
+ && (!q || i.rel.toLowerCase().includes(q)));
+  list.sort(so === "folder" ? (a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }) : so === "old" ? (a, b) => a.mtime - b.mtime
+    : so === "long" ? (a, b) => b.dur - a.dur : (a, b) => b.mtime - a.mtime);
+  $("#count").textContent = `${list.length} shown · ${kept.size} checked`;
+  $("#grid").innerHTML = ""; shown = 0;
+  if (!list.length) { $("#grid").innerHTML = `<div class="empty">${src === "kept" ? "Nothing checked yet." : "No clips match."}</div>`; return; }
+  more();
+}
+function more() {
+  const g = $("#grid"); g.querySelector(".more")?.remove();
+  list.slice(shown, shown + PAGE).forEach((it, k) => {
+    const n = shown + k, c = document.createElement("div"); c.className = "c" + (kept.has(it.p) ? " kept" : "");
+    c.innerHTML = `<div class="top"><label class="pick"><input type="checkbox"${kept.has(it.p) ? " checked" : ""}><span class="nm"></span></label>
+      <button class="src cp" title="Paste into Finder: Go to Folder (Shift+Cmd+G)" style="height:24px;padding:0 8px;font-size:12px">Copy path</button><a class="src fold" target="_blank">Folder ↗</a>${it.used ? `<span class="badge">In a video</span>` : ""}${it.cam ? "" : `<span class="badge">Edited / export</span>`}</div>
+      <div class="th">${it.strip ? `<img loading="lazy" src="${it.strip}">` : `<span class="none">No preview</span>`}</div><div class="meta"></div>`;
+    c.querySelector(".nm").textContent = it.rel.split("/").pop(); c.querySelector(".nm").title = it.p;
+    c.querySelector(".cp").onclick = () => navigator.clipboard.writeText(it.p).then(() => { const b = c.querySelector(".cp"); b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy path", 1200); }); c.querySelector("a.fold").href = url(it.p.split("/").slice(0, -1).join("/")) + "/";
+    c.querySelector(".meta").textContent = [fmt(it.dur), it.w ? `${it.w}×${it.h}` : "", gb(it.size), new Date(it.mtime * 1000).toLocaleDateString(), it.folder].filter(Boolean).join(" · ");
+    c.querySelector(".pick input").onchange = () => toggle(it, c);
+    c.querySelector(".th").onclick = () => open(n);
+    g.appendChild(c);
+  });
+  shown = Math.min(list.length, shown + PAGE);
+  if (shown < list.length) { const b = document.createElement("button"); b.className = "more"; b.textContent = `Show ${Math.min(PAGE, list.length - shown)} more (${list.length - shown} left)`; b.onclick = more; g.appendChild(b); }
+}
+function toggle(it, c) {
+  kept.has(it.p) ? kept.delete(it.p) : kept.add(it.p); save();
+  const on = kept.has(it.p);
+  (c ? [c] : [...$("#grid").children]).forEach(el => { const nm = el.querySelector(".nm"); if (nm && nm.title === it.p) { el.classList.toggle("kept", on); el.querySelector(".pick input").checked = on; } });
+  $("#count").textContent = `${list.length} shown · ${kept.size} checked`;
+  if (cur >= 0) $("#bck").checked = kept.has(list[cur].p);
+}
+const bv = $("#bv");
+function open(n) {
+  if (n < 0 || n >= list.length) return; cur = n; const it = list[n];
+  bv.src = url(it.p); bv.play().catch(() => {});
+  $("#bn").textContent = it.p; $("#bck").checked = kept.has(it.p); $("#big").classList.add("on");
+}
+function close() { bv.pause(); bv.removeAttribute("src"); bv.load(); $("#big").classList.remove("on"); cur = -1; }
+$("#bx").onclick = close; $("#big").onclick = e => { if (e.target.id === "big") close(); };
+$("#bprev").onclick = () => open(cur - 1); $("#bnext").onclick = () => open(cur + 1);
+$("#bck").onchange = () => toggle(list[cur]);
+document.onkeydown = e => { if (cur < 0) return; if (e.key === "Escape") close(); if (e.key === "ArrowRight") open(cur + 1); if (e.key === "ArrowLeft") open(cur - 1);
+  if (e.key === "x") toggle(list[cur]); };
+$("#src").onclick = e => { const b = e.target.closest("button"); if (!b) return; src = b.dataset.v;
+  [...$("#src").children].forEach(x => x.classList.toggle("on", x === b)); render(); };
+$("#top").addEventListener("input", () => { folders(); render(); });
+["#q", "#folder", "#sort", "#cam"].forEach(s => $(s).addEventListener("input", render));
+$("#copy").onclick = () => { const t = [...kept].join("\n");
+  navigator.clipboard.writeText(t).then(() => { $("#copy").textContent = "Copied " + kept.size; setTimeout(() => $("#copy").textContent = "Copy checked list", 1500); }); };
+$("#build").onclick = () => {
+  if (!kept.size) { $("#build").textContent = "Tick some clips first"; setTimeout(() => $("#build").textContent = "Save picks for Claude →", 1500); return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ root: DATA.root, picks: [...kept] }, null, 1)], { type: "application/json" }));
+  a.download = "broll-picks.json"; a.click();
+  $("#build").textContent = `Saved ${kept.size}. Now tell Claude "picks saved"`; };
+folders(); render();
+</script></body></html>
