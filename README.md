@@ -11,17 +11,18 @@ The easiest way in: **https://watchgabe.com/broll** (the same prompt, with a cop
 ## 1 · Paste this into Claude Code
 
 ```
-Install the B-roll Library skill from https://github.com/watchgabe/claude-broll-library and run it for me.
+Set me up to sort my B-roll library, then run it. Do everything yourself and only stop for my answers.
 
-1. Clone the repo into ~/Developer/claude-broll-library (or pull it if it's already there).
-2. Copy skills/broll-library into ~/.claude/skills/broll-library so it's there in every session.
-3. Check that ffmpeg, ffprobe and uv run. If anything is missing, install ffmpeg-full and uv with Homebrew (uninstall plain ffmpeg
-   first, then brew link --overwrite --force ffmpeg-full). Never install plain ffmpeg. If Homebrew is missing, give me the one
-   command to paste into Terminal and wait for me.
-4. Then follow ~/.claude/skills/broll-library/SKILL.md from the top. Do everything yourself and only stop for my answers.
+1. First ask me one question: have I already set up AI video editing with Claude (the prompt from watchgabe.com/prompt)? If yes, check that ffmpeg, ffprobe, uv and git all run, and if they do, skip to step 3. If no, or if anything is missing, do step 2.
+
+2. Check for Homebrew. If it's missing, give me the one command to paste into Terminal and wait for me, then make sure brew runs in your own shell (add /opt/homebrew/bin to my shell profile if it doesn't). Install ffmpeg-full, uv and git with Homebrew. If plain ffmpeg is installed, uninstall it first. ffmpeg-full is keg-only, so link it with brew link --overwrite --force ffmpeg-full and confirm ffmpeg -version and ffprobe -version both work. Never install plain ffmpeg.
+
+3. Clone https://github.com/watchgabe/claude-broll-library into ~/Developer/claude-broll-library (or pull it if it's already there), and copy its skills/broll-library folder into ~/.claude/skills/broll-library so it's there in every session.
+
+4. Follow ~/.claude/skills/broll-library/SKILL.md from the top.
 ```
 
-It asks you three things (where your footage is, where the library should go, and whether you shoot log), then scans. A big drive
+If you've already set up AI video editing, it skips the installs. Then it asks you three things (where your footage is, where the library should go, and whether you shoot log), then scans. A big drive
 takes 20-30 minutes the first time.
 
 ## 2 · Pick
@@ -39,8 +40,3 @@ then press **Done: save for Claude** and tell Claude "edits saved".
 
 Your clips land in the library folder, sorted by what's in them, named by what's in them, and checked one by one.
 Next time just say: **"Sort my B-roll"**.
-
----
-
-Already set up AI video editing with the editing prompt? This is the second half: that one edits what you say, this one builds the
-B-roll library it cuts to.
