@@ -30,7 +30,8 @@ Then: `broll.py config --library "<dir>" --lut "<cube or empty>"`.
 `broll.py scan "<folder>"` (a few thousand clips take 20-30 minutes; say so) then `broll.py open scan.html`.
 Tell them in three lines: each strip is 4 frames of a clip; tick every clip with B-roll worth keeping ("Camera originals only" is on,
 so exports and edits are hidden); press **Save picks for Claude** and tell you "picks saved".
-When they do, the picks are the newest `~/Downloads/broll-picks*.json`. 20-40 clips is a good first run; if they picked over 80, say
+When they do, the picks are the newest `~/Downloads/broll-picks*.json`. Not there (their Chrome saves somewhere else)? Find the newest with
+`mdfind -name broll-picks` and, failing that, ask them where Chrome saved it. 20-40 clips is a good first run; if they picked over 80, say
 it will take a while and use a lot of Claude usage, and offer to start with the first 40.
 
 ## 3 · Their rules (always ask, one AskUserQuestion call)
@@ -79,7 +80,7 @@ sheets against what was kept.
 - Press **Done: save for Claude** and tell me "edits saved".
 
 ## 7 · Export
-Read the newest `~/Downloads/broll-edits*.json` ({clips: [{path, keep, grade, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
+Read the newest `~/Downloads/broll-edits*.json` (not there: `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, grade, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
 one entry per kept part, `{"src", "in", "out", "lut": grade, "folder", "name": "<name> (<source file stem>)"}`, taking folder and
 names from `firstpass.json` and following anything in their notes (rename, a different folder, drop a part). A part they added gets
 a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 10-bit at full resolution, the LUT only where
