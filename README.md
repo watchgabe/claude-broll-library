@@ -6,6 +6,8 @@ color graded and sorted into folders: Desk & Work, Travel, Gym, City... Your ori
 
 You need: a Mac, Google Chrome, the Claude app (Code tab) or Claude Code, and your footage on this Mac or a plugged-in drive.
 
+The easiest way in: **https://watchgabe.com/broll** (the same prompt, with a copy button).
+
 ## 1 · Paste this into Claude Code
 
 ```
@@ -13,8 +15,9 @@ Install the B-roll Library skill from https://github.com/watchgabe/claude-broll-
 
 1. Clone the repo into ~/Developer/claude-broll-library (or pull it if it's already there).
 2. Copy skills/broll-library into ~/.claude/skills/broll-library so it's there in every session.
-3. Check ffmpeg and uv. If either is missing, install them with Homebrew (brew install ffmpeg uv). If Homebrew is missing, give me
-   the one command to paste into Terminal and wait for me.
+3. Check that ffmpeg, ffprobe and uv run. If anything is missing, install ffmpeg-full and uv with Homebrew (uninstall plain ffmpeg
+   first, then brew link --overwrite --force ffmpeg-full). Never install plain ffmpeg. If Homebrew is missing, give me the one
+   command to paste into Terminal and wait for me.
 4. Then follow ~/.claude/skills/broll-library/SKILL.md from the top. Do everything yourself and only stop for my answers.
 ```
 

@@ -14,8 +14,10 @@ lives in `~/B-Roll Sorter`. **Their footage is only ever read**: never move, ren
 Say what's happening in one warm line before anything that takes more than a minute, then get on with it. Don't check in mid-run.
 
 ## 0 · Check
-`ffmpeg -version` and `uv --version`. If either is missing on a Mac: `brew install ffmpeg uv` (no Homebrew: give them the one
-install command from brew.sh to paste into Terminal, and wait). Then go on.
+`ffmpeg -version`, `ffprobe -version` and `uv --version`. If they all run (they will for anyone set up with watchgabe.com/prompt), go on.
+If something is missing on a Mac: Homebrew first (no Homebrew: give them the one install command from brew.sh to paste into
+Terminal, and wait), then `brew install ffmpeg-full uv`. Uninstall plain ffmpeg first if it's there, then
+`brew link --overwrite --force ffmpeg-full`. Never install plain ffmpeg: it would replace the ffmpeg-full their editing setup uses.
 
 ## 1 · Where, and the look (ask once, together)
 Use AskUserQuestion (one call) for:
