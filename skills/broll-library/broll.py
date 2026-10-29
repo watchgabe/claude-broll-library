@@ -11,6 +11,7 @@
   build                                  Claude's checked picks (pass/doneN.json) into the review window (build.html)
   export  <plan.json>                    the finished clips, graded where they need it, sorted into the library, each one checked
   open    <page>                         open scan.html or build.html in the browser
+  wait    picks|edits                    wait for the page's Save button (the file it downloads), copy it into the work folder, exit
 
 Everything it makes lives in the work folder (~/B-Roll Sorter, or $BROLL_WORK). The footage is only ever read, never moved or changed.
 """
@@ -248,7 +249,40 @@ def c_open(a):
         subprocess.run(["open", "-a", "Google Chrome", str(p)] if chrome.exists() else ["open", str(p)])
     elif platform.system() == "Windows": os.startfile(str(p))
     else: subprocess.run(["xdg-open", str(p)])
+    (WORK / f".opened-{a.page}").write_text(str(time.time()))
     say(f"Opened {p}")
+
+def download_dirs():
+    dirs = [pathlib.Path.home() / "Downloads"]      # and wherever Chrome was told to save
+    sup = pathlib.Path.home() / ("Library/Application Support/Google/Chrome" if MAC else ".config/google-chrome")
+    for pref in sup.glob("*/Preferences"):
+        try:
+            d = json.loads(pref.read_text(errors="ignore")).get("download", {}).get("default_directory")
+            if d and pathlib.Path(d).is_dir(): dirs.append(pathlib.Path(d))
+        except (OSError, ValueError): pass
+    return list(dict.fromkeys(dirs))
+
+def c_wait(a):
+    page = "scan.html" if a.kind == "picks" else "build.html"
+    mark = WORK / f".opened-{page}"
+    since = float(mark.read_text()) if mark.exists() else time.time()
+    dirs, t0, n = download_dirs(), time.time(), 0
+    say(f"Waiting for the {page} Save button (looking in {', '.join(str(d) for d in dirs)})...")
+    while time.time() - t0 < 4 * 3600:
+        found = [f for d in dirs for f in d.glob(f"broll-{a.kind}*.json")]
+        if MAC and n % 8 == 0:      # saved somewhere else: Spotlight finds it
+            r = run(["mdfind", "-onlyin", str(pathlib.Path.home()), f"kMDItemFSName == 'broll-{a.kind}*.json'"], timeout=30)
+            found += [pathlib.Path(x) for x in r.stdout.splitlines() if x.strip()]
+        found = [f for f in found if f.is_file() and f.stat().st_mtime > since - 2]
+        if found:
+            f = max(found, key=lambda f: f.stat().st_mtime)
+            try: data = json.loads(f.read_text())
+            except ValueError: time.sleep(1); continue      # still being written
+            (WORK / f"{a.kind}.json").write_text(json.dumps(data, indent=1))
+            got = len(data.get("picks") or data.get("clips") or [])
+            say(f"Saved: {got} clips, from {f}. Copied to {WORK / (a.kind + '.json')}"); return
+        n += 1; time.sleep(2)
+    sys.exit(f"Nothing saved from {page} in 4 hours. Ask them to press its Save button, or where Chrome saved broll-{a.kind}.json.")
 
 if __name__ == "__main__":
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"): sys.exit("ffmpeg isn't installed. Install it first (Mac: brew install ffmpeg).")
@@ -259,5 +293,6 @@ if __name__ == "__main__":
     sp.add_parser("detail"); sp.add_parser("build")
     x = sp.add_parser("export"); x.add_argument("plan")
     x = sp.add_parser("open"); x.add_argument("page")
+    x = sp.add_parser("wait"); x.add_argument("kind", choices=["picks", "edits"])
     a = ap.parse_args(); WORK.mkdir(parents=True, exist_ok=True)
-    {"config": c_config, "scan": c_scan, "prep": c_prep, "detail": c_detail, "build": c_build, "export": c_export, "open": c_open}[a.cmd](a)
+    {"config": c_config, "scan": c_scan, "prep": c_prep, "detail": c_detail, "build": c_build, "export": c_export, "open": c_open, "wait": c_wait}[a.cmd](a)

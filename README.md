@@ -27,14 +27,15 @@ takes 20-30 minutes the first time.
 
 ## 2 · Pick
 
-A page opens in Chrome with every clip as a 4-frame strip. Tick the ones with B-roll, press **Save picks for Claude**, and tell
-Claude "picks saved". Start with 20-40 clips.
+A page opens in Chrome with every clip as a 4-frame strip. Tick the ones with B-roll and press **Save picks for Claude**.
+That's it: Claude carries on by itself. Start with 20-40 clips.
 
 ## 3 · Review
 
-Claude asks four quick questions (looking at the camera? clean or behind-the-scenes? talking? how long?), finds the best parts,
+While the scan runs, Claude asks four quick questions (looking at the camera? clean or behind-the-scenes? talking? how long?).
+After you pick, it finds the best parts by itself
 and opens a review window. Drag the green blocks to move or trim them, delete the ones you don't want, flip between LUT and No LUT,
-then press **Done: save for Claude** and tell Claude "edits saved".
+then press **Done: save for Claude**. Claude exports everything by itself.
 
 ## 4 · Done
 

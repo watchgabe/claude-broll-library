@@ -41,6 +41,13 @@ a.src{color:var(--ink-2);font-size:12px;white-space:nowrap;flex:none}a.src:hover
 #big .row{display:flex;gap:8px;align-items:center;margin-top:8px}
 #big .row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:600px){main{grid-template-columns:1fr;padding:16px}header{padding:16px}}
+#sent{position:fixed;inset:0;z-index:50;background:rgba(13,14,16,.94);display:none;align-items:center;justify-content:center;padding:24px}
+#sent.on{display:flex}
+#sent .box{max-width:440px;text-align:center}
+#sent .ok{width:48px;height:48px;border-radius:50%;background:#6fdca8;color:#0d0e10;font-size:24px;line-height:48px;margin:0 auto 16px;font-weight:700}
+#sent h2{margin:0 0 8px;font-size:20px;font-weight:600}
+#sent p{margin:0 0 16px;color:var(--ink-2);font-size:14px;line-height:1.5}
+#sent button{font:inherit;font-size:13px;color:var(--mute);background:none;border:1px solid var(--line);border-radius:var(--r);padding:8px 16px;cursor:pointer}
 </style></head><body>
 <header>
   <h1>Your footage</h1>
@@ -58,6 +65,8 @@ a.src{color:var(--ink-2);font-size:12px;white-space:nowrap;flex:none}a.src:hover
   </div>
 </header>
 <main id="grid"></main>
+<div id="sent"><div class="box"><div class="ok">✓</div><h2 id="sentH"></h2><p id="sentP">Claude has them and is finding the best moments in each clip now. The review window opens by itself when it's ready, a few minutes for every 10 clips. You can close this tab and go back to Claude.</p><button id="sentX">Back to this page</button></div></div>
+
 <div id="big"><div class="box"><video id="bv" controls playsinline muted></video>
   <div class="row"><div class="t" id="bn"></div>
   <label class="ck"><input type="checkbox" id="bck">Check</label><button id="bprev">← Prev</button><button id="bnext">Next →</button><button id="bx">Close</button></div></div></div>
@@ -140,6 +149,8 @@ $("#build").onclick = () => {
   if (!kept.size) { $("#build").textContent = "Tick some clips first"; setTimeout(() => $("#build").textContent = "Save picks for Claude →", 1500); return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ root: DATA.root, picks: [...kept] }, null, 1)], { type: "application/json" }));
   a.download = "broll-picks.json"; a.click();
-  $("#build").textContent = `Saved ${kept.size}. Now tell Claude "picks saved"`; };
+  $("#build").textContent = `Sent ${kept.size} to Claude`;
+  $("#sentH").textContent = `${kept.size} clips sent to Claude`; $("#sent").classList.add("on"); };
+$("#sentX").onclick = () => $("#sent").classList.remove("on");
 folders(); render();
 </script></body></html>

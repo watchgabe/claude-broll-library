@@ -26,23 +26,26 @@ Use AskUserQuestion (one call) for:
 - **Do you shoot log?** If yes, the path to their LUT (.cube). If no, there's no grade.
 Then: `broll.py config --library "<dir>" --lut "<cube or empty>"`.
 
-## 2 · Scan, and they pick
-`broll.py scan "<folder>"` (a few thousand clips take 20-30 minutes; say so) then `broll.py open scan.html`.
-Tell them in three lines: each strip is 4 frames of a clip; tick every clip with B-roll worth keeping ("Camera originals only" is on,
-so exports and edits are hidden); press **Save picks for Claude** and tell you "picks saved".
-When they do, the picks are the newest `~/Downloads/broll-picks*.json`. Not there (their Chrome saves somewhere else)? Find the newest with
-`mdfind -name broll-picks` and, failing that, ask them where Chrome saved it. 20-40 clips is a good first run; if they picked over 80, say
-it will take a while and use a lot of Claude usage, and offer to start with the first 40.
-
-## 3 · Their rules (always ask, one AskUserQuestion call)
+## 2 · Scan, and their rules while it runs
+Start `broll.py scan "<folder>"` in the background (a few thousand clips take 20-30 minutes; say so in one line). While it runs, ask
+their rules in one AskUserQuestion call:
 - **Looking at the camera:** Never (classic B-roll) / A glance is fine / Prefer it (vlog feel)
 - **Feel:** Clean B-roll (no gear or setup) / Behind the scenes welcome / Your call, clip by clip
 - **Talking to camera:** Skip it / Keep the best lines too
 - **Part length:** About 10 s (6-15) / Short cutaways (3-5 s) / Long stretches (15-30 s)
 Save the answers to `~/B-Roll Sorter/rules.json`. Every reviewer below gets them word for word.
 
+## 3 · They pick (they never type anything to move on)
+When the scan is done: `broll.py open scan.html`, then start `broll.py wait picks` **in the background** and end your turn with
+three lines: each strip is 4 frames of a clip; tick every clip with B-roll worth keeping ("Camera originals only" is on, so exports
+and edits are hidden); press **Save picks for Claude** when done, and you'll take it from there by yourself.
+When `wait picks` finishes, the picks are in `~/B-Roll Sorter/picks.json` ({root, picks}): go straight on, no check-in. 20-40 clips is a
+good first run; if they picked over 80, say in one line it will take a while and use a lot of Claude usage, then go on with all of
+them unless they stop you. (If they type "picks saved" before the wait finishes, or the wait fails, find the newest
+`broll-picks*.json` with `mdfind -name broll-picks` and, failing that, ask where Chrome saved it.)
+
 ## 4 · Prep
-`broll.py prep "<picks json>"`: preview copies, log detection (the camera's own picture profile first, a flatness test if it has none;
+`broll.py prep ~/B-Roll\ Sorter/picks.json`: preview copies, log detection (the camera's own picture profile first, a flatness test if it has none;
 the LUT goes **only** on log clips, never decided by file name), LUT-graded previews, and an overview sheet per clip. Then it writes
 batches of about 20 clips to `~/B-Roll Sorter/pass/todoN.json`.
 
@@ -72,15 +75,15 @@ Then `broll.py detail` (close-up sheets: 2 frames a second, bigger frames, for e
 Check the results yourself before going on: every `p` present, parts inside the clip, no overlaps. Look at two or three close-up
 sheets against what was kept.
 
-## 6 · They review
-`broll.py build` then `broll.py open build.html`. Tell them how in four short lines:
+## 6 · They review (again, no typing to move on)
+`broll.py build`, `broll.py open build.html`, then start `broll.py wait edits` **in the background** and end your turn with four short lines:
 - Your picks are the green blocks under each clip: drag the middle to move one, drag an edge to trim, click ✕ to drop it; I and O mark a new one.
 - "LUT / No LUT" shows the grade (only log clips have one). Notes are for anything else ("slow it down", "call it X").
 - "Skip this clip" if none of it is any good.
-- Press **Done: save for Claude** and tell me "edits saved".
+- Press **Done: save for Claude** and I'll export everything by myself.
 
 ## 7 · Export
-Read the newest `~/Downloads/broll-edits*.json` (not there: `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, grade, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
+When `wait edits` finishes, read `~/B-Roll Sorter/edits.json` (if it failed: the newest `broll-edits*.json` via `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, grade, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
 one entry per kept part, `{"src", "in", "out", "lut": grade, "folder", "name": "<name> (<source file stem>)"}`, taking folder and
 names from `firstpass.json` and following anything in their notes (rename, a different folder, drop a part). A part they added gets
 a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 10-bit at full resolution, the LUT only where

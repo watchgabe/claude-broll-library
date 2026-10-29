@@ -65,7 +65,15 @@ label.ck input{width:16px;height:16px;margin:0;accent-color:#eceef0}
 textarea{width:100%;min-height:96px;font:13px/1.5 var(--font);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:8px;resize:vertical}
 .row{display:flex;gap:16px;flex-wrap:wrap}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:var(--r);display:none}
+#sent{position:fixed;inset:0;z-index:50;background:rgba(13,14,16,.94);display:none;align-items:center;justify-content:center;padding:24px}
+#sent.on{display:flex}
+#sent .box{max-width:440px;text-align:center}
+#sent .ok{width:48px;height:48px;border-radius:50%;background:#6fdca8;color:#0d0e10;font-size:24px;line-height:48px;margin:0 auto 16px;font-weight:700}
+#sent h2{margin:0 0 8px;font-size:20px;font-weight:600}
+#sent p{margin:0 0 16px;color:var(--ink-2);font-size:14px;line-height:1.5}
+#sent button{font:inherit;font-size:13px;color:var(--mute);background:none;border:1px solid var(--line);border-radius:var(--r);padding:8px 16px;cursor:pointer}
 </style></head><body>
+<div id="sent"><div class="box"><div class="ok">✓</div><h2 id="sentH"></h2><p id="sentP">Claude is exporting your clips from the originals now, graded and sorted into folders. It tells you in the Claude window when your library is ready. You can close this tab.</p><button id="sentX">Back to this page</button></div></div>
 <header>
   <h1>Review Claude's picks</h1><span class="sub" id="sub"></span><span class="sp"></span>
   <button id="copyAll">Copy all edits</button>
@@ -257,7 +265,10 @@ $("#copyAll").onclick = () => navigator.clipboard.writeText(summary()).then(() =
 $("#saveFile").onclick = () => {
   const data = { made: new Date().toISOString(), clips: picks.map(p => ({ path: p, ...(edits[p] || fresh(p)), claude: FIRST[p] || null })) };
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-  a.download = "broll-edits.json"; a.click(); toast('Saved. Now tell Claude "edits saved"');
+  a.download = "broll-edits.json"; a.click();
+  const n = data.clips.filter(c => !c.skip).reduce((k, c) => k + (c.keep || []).length, 0);
+  $("#sentH").textContent = `${n} clips sent to Claude`; $("#sent").classList.add("on");
 };
 show(0);
+$("#sentX").onclick = () => $("#sent").classList.remove("on");
 </script></body></html>
