@@ -33,8 +33,8 @@ Start `broll.py scan "<folder>"` in the background (a folder of a few hundred cl
 their rules in one AskUserQuestion call:
 - **Looking at the camera:** Never (classic B-roll) / A glance is fine / Prefer it (vlog feel)
 - **Feel:** Clean B-roll (no gear or setup) / Behind the scenes welcome / Your call, clip by clip
-- **Talking to camera:** Skip it / Keep the best lines too
 - **Part length:** About 10 s (6-15) / Short cutaways (3-5 s) / Long stretches (15-30 s)
+Don't ask about talking: B-roll never keeps someone talking to camera, so add `"talking_to_camera": "Skip it"` yourself.
 Save the answers to `~/B-Roll Sorter/rules.json`. Every reviewer below gets them word for word.
 
 ## 3 · They pick (they never type anything to move on)

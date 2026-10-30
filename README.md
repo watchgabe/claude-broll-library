@@ -32,7 +32,7 @@ That's it: Claude carries on by itself. Start with 20-40 clips.
 
 ## 3 · Review
 
-While the scan runs, Claude asks four quick questions (looking at the camera? clean or behind-the-scenes? talking? how long?).
+While the scan runs, Claude asks three quick questions (looking at the camera? clean or behind-the-scenes? how long?).
 After you pick, it finds the best parts by itself
 and opens a review window. Drag the green blocks to move or trim them, delete the ones you don't want,
 then press **Done: save for Claude**. Claude exports everything by itself.
