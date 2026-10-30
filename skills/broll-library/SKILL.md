@@ -20,14 +20,13 @@ Terminal, and wait), then `brew install ffmpeg-full uv`. Uninstall plain ffmpeg 
 `brew link --overwrite --force ffmpeg-full`. Never install plain ffmpeg: it would replace the ffmpeg-full their editing setup uses.
 
 ## 1 · Which folder are we doing?
-Ask in two quick AskUserQuestion calls, one question each:
-1. **Which drive?** Offer the drives in `/Volumes` (skip Macintosh HD unless it's all they have) and their home folder.
-2. **Which folder on it?** List that drive's top-level folders, newest changed first. Offer the 3 newest by name, plus **The whole
-   drive (slowest)**. "Other" lets them type or paste a deeper folder. If they name a folder in plain words ("the Portugal trip"),
-   find it on the drive and confirm it in one line.
-Don't ask where the library goes: it's a `B-Roll Library` folder at the top of the same drive. Say so in one line ("change it any time
-by telling me"), then `broll.py config --library "<drive>/B-Roll Library"`. No color questions: this sorts and trims, it never grades.
-The clips come out with the camera's own color (log stays log), for them to grade in their editor.
+Ask in one line, no question card: **"Which footage are we sorting? Click the + below, choose Add folder, pick the folder, then type go and
+press Enter."** (In Claude Code in a terminal there's no +: "drag the folder into this window and press Enter.")
+The folder they added shows up as an added working directory in your context; a dragged folder arrives as its path. Neither there?
+Ask them to drag it in. Then say in one line what you're scanning and where the finished clips go, and go on:
+- The library is a `B-Roll Library` folder at the top of the same drive (`/Volumes/<drive>/B-Roll Library`), or next to the folder
+  if it's on this Mac. Don't ask; "tell me if you want it somewhere else". `broll.py config --library "<that folder>"`.
+- No color questions: this sorts and trims, it never grades. The clips come out with the camera's own color (log stays log).
 
 ## 2 · Scan, and their rules while it runs
 Start `broll.py scan "<folder>"` in the background (a folder of a few hundred clips takes a few minutes, a whole drive 20-30; say which in one line). While it runs, ask

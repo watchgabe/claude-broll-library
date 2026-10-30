@@ -22,7 +22,8 @@ Set me up to sort my B-roll library, then run it. Do everything yourself and onl
 4. Follow ~/.claude/skills/broll-library/SKILL.md from the top.
 ```
 
-If you've already set up AI video editing, it skips the installs. Then it asks which drive and which folder to do, and scans it: a few minutes for a folder, 20-30 for a whole drive.
+If you've already set up AI video editing, it skips the installs. Then it asks which footage to sort: click the **+** below the chat, choose **Add folder**, pick the folder, then type **go** and press Enter.
+It scans it: a few minutes for a folder, 20-30 for a whole drive.
 
 ## 2 · Pick
 
