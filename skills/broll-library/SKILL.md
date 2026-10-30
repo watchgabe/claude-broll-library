@@ -19,15 +19,18 @@ If something is missing on a Mac: Homebrew first (no Homebrew: give them the one
 Terminal, and wait), then `brew install ffmpeg-full uv`. Uninstall plain ffmpeg first if it's there, then
 `brew link --overwrite --force ffmpeg-full`. Never install plain ffmpeg: it would replace the ffmpeg-full their editing setup uses.
 
-## 1 · Where (ask once, together)
-Use AskUserQuestion (one call) for:
-- **Which folder or drive** holds the footage? (List `/Volumes` on a Mac to offer their drives.)
-- **Where should the finished library go?** Default: a `B-Roll Library` folder next to the footage (same drive).
-Then: `broll.py config --library "<dir>"`. No color questions: this sorts and trims, it never grades. The clips come out with the
-camera's own color (log stays log), for them to grade in their editor.
+## 1 · Which folder are we doing?
+Ask in two quick AskUserQuestion calls, one question each:
+1. **Which drive?** Offer the drives in `/Volumes` (skip Macintosh HD unless it's all they have) and their home folder.
+2. **Which folder on it?** List that drive's top-level folders, newest changed first. Offer the 3 newest by name, plus **The whole
+   drive (slowest)**. "Other" lets them type or paste a deeper folder. If they name a folder in plain words ("the Portugal trip"),
+   find it on the drive and confirm it in one line.
+Don't ask where the library goes: it's a `B-Roll Library` folder at the top of the same drive. Say so in one line ("change it any time
+by telling me"), then `broll.py config --library "<drive>/B-Roll Library"`. No color questions: this sorts and trims, it never grades.
+The clips come out with the camera's own color (log stays log), for them to grade in their editor.
 
 ## 2 · Scan, and their rules while it runs
-Start `broll.py scan "<folder>"` in the background (a few thousand clips take 20-30 minutes; say so in one line). While it runs, ask
+Start `broll.py scan "<folder>"` in the background (a folder of a few hundred clips takes a few minutes, a whole drive 20-30; say which in one line). While it runs, ask
 their rules in one AskUserQuestion call:
 - **Looking at the camera:** Never (classic B-roll) / A glance is fine / Prefer it (vlog feel)
 - **Feel:** Clean B-roll (no gear or setup) / Behind the scenes welcome / Your call, clip by clip
