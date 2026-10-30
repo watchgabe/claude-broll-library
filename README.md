@@ -1,8 +1,8 @@
 # Your B-roll, sorted by Claude
 
 Point Claude at your footage. It shows you every clip as a filmstrip, you tick the ones with B-roll, and Claude finds the best
-moments in each (never you staring into the lens, unless you want that), lets you check and adjust them, then exports them
-color graded and sorted into folders: Desk & Work, Travel, Gym, City... Your original files are never moved or changed.
+moments in each (never you staring into the lens, unless you want that), lets you check and adjust them, then cuts them
+from the originals and sorts them into folders: Desk & Work, Travel, Gym, City... Your original files are never moved or changed, and the color is left as you shot it, for you to grade your way.
 
 You need: a Mac, Google Chrome, the Claude app (Code tab) or Claude Code, and your footage on this Mac or a plugged-in drive.
 
@@ -22,7 +22,7 @@ Set me up to sort my B-roll library, then run it. Do everything yourself and onl
 4. Follow ~/.claude/skills/broll-library/SKILL.md from the top.
 ```
 
-If you've already set up AI video editing, it skips the installs. Then it asks you three things (where your footage is, where the library should go, and whether you shoot log), then scans. A big drive
+If you've already set up AI video editing, it skips the installs. Then it asks you three things (where your footage is and where the library should go), then scans. A big drive
 takes 20-30 minutes the first time.
 
 ## 2 · Pick
@@ -34,7 +34,7 @@ That's it: Claude carries on by itself. Start with 20-40 clips.
 
 While the scan runs, Claude asks four quick questions (looking at the camera? clean or behind-the-scenes? talking? how long?).
 After you pick, it finds the best parts by itself
-and opens a review window. Drag the green blocks to move or trim them, delete the ones you don't want, flip between LUT and No LUT,
+and opens a review window. Drag the green blocks to move or trim them, delete the ones you don't want,
 then press **Done: save for Claude**. Claude exports everything by itself.
 
 ## 4 · Done

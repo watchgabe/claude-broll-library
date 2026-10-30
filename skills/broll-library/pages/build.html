@@ -73,7 +73,7 @@ textarea{width:100%;min-height:96px;font:13px/1.5 var(--font);color:var(--ink);b
 #sent p{margin:0 0 16px;color:var(--ink-2);font-size:14px;line-height:1.5}
 #sent button{font:inherit;font-size:13px;color:var(--mute);background:none;border:1px solid var(--line);border-radius:var(--r);padding:8px 16px;cursor:pointer}
 </style></head><body>
-<div id="sent"><div class="box"><div class="ok">✓</div><h2 id="sentH"></h2><p id="sentP">Claude is exporting your clips from the originals now, graded and sorted into folders. It tells you in the Claude window when your library is ready. You can close this tab.</p><button id="sentX">Back to this page</button></div></div>
+<div id="sent"><div class="box"><div class="ok">✓</div><h2 id="sentH"></h2><p id="sentP">Claude is cutting your clips from the originals now and sorting them into folders. It tells you in the Claude window when your library is ready. You can close this tab.</p><button id="sentX">Back to this page</button></div></div>
 <header>
   <h1>Review Claude's picks</h1><span class="sub" id="sub"></span><span class="sp"></span>
   <button id="copyAll">Copy all edits</button>
@@ -85,32 +85,30 @@ textarea{width:100%;min-height:96px;font:13px/1.5 var(--font);color:var(--ink);b
 </div>
 <div id="toast"></div>
 <script>
-const META = /*META*/null;      // {path: {dur, proxy, graded, strip, gamma, log}}, filled in by broll.py build
+const META = /*META*/null;      // {path: {dur, proxy, strip}}, filled in by broll.py build
 const DEFAULT_PICKS = /*PICKS*/null;
 const FIRST = /*FIRST*/null;
-const PROFILE = { "s-log3": "S-Log3", "s-log3-cine": "S-Log3-Cine", "s-log2": "S-Log2", "s-cinetone": "S-Cinetone", "rec709": "Rec709", "hlg": "HLG", "hlg3": "HLG3", "nxcam-still": "a still-camera mode" };
-const CAM = Object.fromEntries(Object.entries(META).map(([p, m]) => [p, { gamma: PROFILE[(m.gamma || "").toLowerCase()] || m.gamma, lut: m.log }]));      // {path: {gamma: the picture profile the camera wrote, lut: whether it needs the LUT}}      // Claude's first pass: {path: {keep, skip, why}}
 const $ = s => document.querySelector(s);
 const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
              set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const picks = DEFAULT_PICKS;
 const KEY = "brollEdits:" + picks.length + ":" + (picks[0] || "");
-const edits = LS.get(KEY, {});      // {path: {keep: [[in, out]], grade: bool, notes: "", skip: bool}}
+const edits = LS.get(KEY, {});      // {path: {keep: [[in, out]], notes: "", skip: bool}}
 const save = () => LS.set(KEY, edits);
 for (const [p, e] of Object.entries(edits)) if (e.by !== "you") delete edits[p];      // only what you changed is kept; everything else comes from Claude's latest pass      // opened, never marked: Claude's pass shows
-const fresh = p => { const f = FIRST[p]; return { keep: f ? f.keep.map(x => [...x]) : [], grade: CAM[p] ? CAM[p].lut : /^(C\d{4})/i.test(p.split("/").pop()), notes: "", skip: f ? !!f.skip : false, by: f ? "claude" : "" }; };
+const fresh = p => { const f = FIRST[p]; return { keep: f ? f.keep.map(x => [...x]) : [], notes: "", skip: f ? !!f.skip : false, by: f ? "claude" : "" }; };
 const ed = p => edits[p] || (edits[p] = fresh(p));
 const url = p => "file://" + p.split("/").map(encodeURIComponent).join("/");
 const name = p => p.split("/").pop();
 const tc = s => { if (s == null || isNaN(s)) return "–"; const m = Math.floor(s / 60), r = s - m * 60; return m + ":" + r.toFixed(1).padStart(4, "0"); };
-let cur = 0, pendIn = null, sel = null, look = "graded";      // look: which preview the player shows, graded (the LUT the export uses) or log      // sel: the selected part on the timeline
-$("#sub").textContent = `${picks.length} clips · mark the parts to keep, tick grade, add notes. It saves as you go.`;
+let cur = 0, pendIn = null, sel = null;      // sel: the selected part on the timeline
+$("#sub").textContent = `${picks.length} clips · mark the parts to keep, add notes. It saves as you go.`;
 function status(p) {
   const e = edits[p] || (FIRST[p] ? fresh(p) : null); if (!e) return ["", "Not marked yet"];
   const who = e.by === "you" ? "You" : e.by === "claude" ? "Claude" : "";
   if (e.skip) return ["skip", (who ? who + ": " : "") + "skip"];
   const n = e.keep.length; if (!n && !e.notes.trim()) return ["", "Not marked yet"];
-  return [e.by === "you" ? "mine" : "done", (who ? who + ": " : "") + (n ? `${n} part${n > 1 ? "s" : ""}` : "notes only") + (e.grade ? " · grade" : "")];
+  return [e.by === "you" ? "mine" : "done", (who ? who + ": " : "") + (n ? `${n} part${n > 1 ? "s" : ""}` : "notes only")];
 }
 function list() {
   const L = $("#list"); L.innerHTML = "";
@@ -129,7 +127,7 @@ function show(i) {
   if (i < 0 || i >= picks.length) return; cur = i; pendIn = null; sel = null;
   const p = picks[i], m = META[p] || {}, e = ed(p);
   $("#main").innerHTML = `
-    <div class="title"><span class="n"></span><span class="p" title="The original file. You are scrubbing a light copy timed exactly like it."></span><div class="seg" id="look" title="The graded preview uses the same LUT as the export"><button data-v="graded">LUT</button><button data-v="log">No LUT</button></div><button class="sm" id="cpath" title="Paste into Finder: Go to Folder (Shift+Cmd+G)">Copy path</button><a class="src" id="ofold" target="_blank">Folder ↗</a><button class="sm" id="prev">← Prev</button><button class="sm" id="next">Next →</button></div>
+    <div class="title"><span class="n"></span><span class="p" title="The original file. You are scrubbing a light copy timed exactly like it."></span><button class="sm" id="cpath" title="Paste into Finder: Go to Folder (Shift+Cmd+G)">Copy path</button><a class="src" id="ofold" target="_blank">Folder ↗</a><button class="sm" id="prev">← Prev</button><button class="sm" id="next">Next →</button></div>
     <div class="vid"><video id="v" controls playsinline muted preload="auto"></video></div>
     <div class="tl" id="tl"><div class="dim"></div></div>
     <div class="ctl">
@@ -141,22 +139,14 @@ function show(i) {
     </div>
     <div class="sec"><h3>Parts to keep</h3><div class="why" id="why"></div><div class="chips" id="chips"></div></div>
     <div class="sec row">
-      <label class="ck"><input type="checkbox" id="grade">Color grade it (your LUT)</label><span class="kbd" id="camg" style="align-self:center"></span>
       <label class="ck"><input type="checkbox" id="skip">Skip this clip</label>
     </div>
-    <div class="sec"><h3>Notes for this clip</h3><textarea id="notes" placeholder="e.g. color grade it, take 0:12 to 0:18, slow it down, crop to 9:16, name it 'Laptop at the window'"></textarea></div>`;
+    <div class="sec"><h3>Notes for this clip</h3><textarea id="notes" placeholder="e.g. take 0:12 to 0:18, slow it down, crop to 9:16, name it 'Laptop at the window'"></textarea></div>`;
   $("#main .title .n").textContent = name(p); $("#main .title .p").textContent = p; $("#cpath").onclick = () => copyPath(p); $("#ofold").href = url(p.split("/").slice(0, -1).join("/")) + "/";
   const v = $("#v"); v.muted = true;
-  const src = () => (look === "graded" && e.grade && m.graded) ? m.graded : (m.proxy || url(p));
-  const paint = () => [...$("#look").children].forEach(b => { b.classList.toggle("on", b.dataset.v === (e.grade && m.graded ? look : "log")); b.disabled = !e.grade || !m.graded; });
-  const swap = () => { const t = v.currentTime, playing = !v.paused, s2 = src(); if (v.getAttribute("src") === s2) return paint();
-    v.src = s2; v.addEventListener("loadedmetadata", () => { v.currentTime = t; if (playing) v.play().catch(() => {}); }, { once: true }); paint(); };
-  v.src = src(); paint();
-  $("#look").onclick = ev => { const b = ev.target.closest("button"); if (!b || b.disabled) return; look = b.dataset.v; swap(); };
+  v.src = m.proxy || url(p);
   if (m.strip) $("#tl").style.backgroundImage = `url("${m.strip}")`;
-  $("#grade").checked = e.grade;
-  const cg = CAM[p]; $("#camg").textContent = cg ? (cg.gamma ? `Shot in ${cg.gamma}: ` : "No picture profile recorded: ") + (cg.lut ? "log, needs the LUT" : "already has its look, no LUT needed") : ""; $("#skip").checked = e.skip; $("#notes").value = e.notes;
-  $("#grade").onchange = () => { e.grade = $("#grade").checked; e.by = "you"; save(); swap(); list(); };
+  $("#skip").checked = e.skip; $("#notes").value = e.notes;
   $("#skip").onchange = () => { e.skip = $("#skip").checked; e.by = "you"; save(); list(); };
   $("#notes").oninput = () => { e.notes = $("#notes").value; e.by = "you"; save(); clearTimeout(show.t); show.t = setTimeout(list, 400); };
   $("#prev").onclick = () => show(cur - 1); $("#next").onclick = () => show(cur + 1);
@@ -253,7 +243,6 @@ function summary() {
     lines.push(`${i + 1}. ${p}` + (e.by === "you" ? "  (changed by you)" : e.by === "claude" ? "  (Claude's pick, not changed)" : ""));
     if (e.skip) { lines.push("   Skip" + (FIRST[p] && e.by === "claude" ? ": " + FIRST[p].why : "")); lines.push(""); return; }
     lines.push("   Keep: " + (e.keep.length ? e.keep.map(([a, b]) => `${a.toFixed(2)}–${b.toFixed(2)} s`).join(", ") : "whole clip"));
-    lines.push("   Grade: " + (e.grade ? "yes, LUT" : "no"));
     if (e.notes.trim()) lines.push("   Notes: " + e.notes.trim().replace(/\n+/g, " / "));
     lines.push("");
   });

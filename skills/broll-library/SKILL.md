@@ -1,6 +1,6 @@
 ---
 name: broll-library
-description: Sort a B-roll library from raw footage. Scans a drive or folder, shows every clip as a filmstrip so the person picks the ones with B-roll, then Claude finds the best 6-15 second moments in each (by their rules), they review and adjust them in a browser window, and the finished clips are exported graded and sorted into folders by what's in them. Use when someone says "sort my B-roll", "build my B-roll library", "find B-roll on my drive", "go through my footage", or asks for the B-roll skill.
+description: Sort a B-roll library from raw footage. Scans a drive or folder, shows every clip as a filmstrip so the person picks the ones with B-roll, then Claude finds the best 6-15 second moments in each (by their rules), they review and adjust them in a browser window, and the finished clips are cut from the originals and sorted into folders by what's in them. Use when someone says "sort my B-roll", "build my B-roll library", "find B-roll on my drive", "go through my footage", or asks for the B-roll skill.
 ---
 
 # B-roll Library
@@ -19,12 +19,12 @@ If something is missing on a Mac: Homebrew first (no Homebrew: give them the one
 Terminal, and wait), then `brew install ffmpeg-full uv`. Uninstall plain ffmpeg first if it's there, then
 `brew link --overwrite --force ffmpeg-full`. Never install plain ffmpeg: it would replace the ffmpeg-full their editing setup uses.
 
-## 1 · Where, and the look (ask once, together)
+## 1 · Where (ask once, together)
 Use AskUserQuestion (one call) for:
 - **Which folder or drive** holds the footage? (List `/Volumes` on a Mac to offer their drives.)
 - **Where should the finished library go?** Default: a `B-Roll Library` folder next to the footage (same drive).
-- **Do you shoot log?** If yes, the path to their LUT (.cube). If no, there's no grade.
-Then: `broll.py config --library "<dir>" --lut "<cube or empty>"`.
+Then: `broll.py config --library "<dir>"`. No color questions: this sorts and trims, it never grades. The clips come out with the
+camera's own color (log stays log), for them to grade in their editor.
 
 ## 2 · Scan, and their rules while it runs
 Start `broll.py scan "<folder>"` in the background (a few thousand clips take 20-30 minutes; say so in one line). While it runs, ask
@@ -45,8 +45,7 @@ them unless they stop you. (If they type "picks saved" before the wait finishes,
 `broll-picks*.json` with `mdfind -name broll-picks` and, failing that, ask where Chrome saved it.)
 
 ## 4 · Prep
-`broll.py prep ~/B-Roll\ Sorter/picks.json`: preview copies, log detection (the camera's own picture profile first, a flatness test if it has none;
-the LUT goes **only** on log clips, never decided by file name), LUT-graded previews, and an overview sheet per clip. Then it writes
+`broll.py prep ~/B-Roll\ Sorter/picks.json`: light preview copies and an overview sheet per clip. Then it writes
 batches of about 20 clips to `~/B-Roll Sorter/pass/todoN.json`.
 
 ## 5 · Your first pass (two stages, subagents in parallel)
@@ -78,23 +77,23 @@ sheets against what was kept.
 ## 6 · They review (again, no typing to move on)
 `broll.py build`, `broll.py open build.html`, then start `broll.py wait edits` **in the background** and end your turn with four short lines:
 - Your picks are the green blocks under each clip: drag the middle to move one, drag an edge to trim, click ✕ to drop it; I and O mark a new one.
-- "LUT / No LUT" shows the grade (only log clips have one). Notes are for anything else ("slow it down", "call it X").
+- Notes are for anything else ("call it X", "put it in Travel").
 - "Skip this clip" if none of it is any good.
 - Press **Done: save for Claude** and I'll export everything by myself.
 
 ## 7 · Export
-When `wait edits` finishes, read `~/B-Roll Sorter/edits.json` (if it failed: the newest `broll-edits*.json` via `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, grade, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
-one entry per kept part, `{"src", "in", "out", "lut": grade, "folder", "name": "<name> (<source file stem>)"}`, taking folder and
+When `wait edits` finishes, read `~/B-Roll Sorter/edits.json` (if it failed: the newest `broll-edits*.json` via `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
+one entry per kept part, `{"src", "in", "out", "folder", "name": "<name> (<source file stem>)"}`, taking folder and
 names from `firstpass.json` and following anything in their notes (rename, a different folder, drop a part). A part they added gets
-a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 10-bit at full resolution, the LUT only where
-`lut` is true, every file checked: starts at 0 and its first frame isn't black). Fix anything marked CHECK (move the start off a
+a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 10-bit at full resolution, color untouched,
+every file checked: starts at 0 and its first frame isn't black). Fix anything marked CHECK (move the start off a
 dark frame by 0.5 s and export that part again) before saying it's done.
 
 Finish with: how many clips in how many folders, where the library is, and one line on what to do next (drag the folder into their
 editor, or run this again on another drive: clips they've already exported won't be overwritten).
 
 ## Rules that came from real runs
-- Judge from sheets that show the grade it will have; a LUT on footage that isn't log makes faces harsh and judgement worse.
-- The camera's picture profile decides log, not the file name (on one drive 20 of 74 `C####` clips were S-Cinetone, already graded).
+- Never grade or add a LUT, even when asked mid-run: say in one line that grading is theirs to do in their editor (Gabe, 2026-10-30).
+- Log footage looks flat and grey on the sheets. Judge it the same; flat is not dull.
 - Small frames hide eye contact. Always the second stage.
 - Their edits win: a clip they changed is never overwritten by a later pass.
