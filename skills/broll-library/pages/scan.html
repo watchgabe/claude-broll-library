@@ -108,10 +108,10 @@ function more() {
   list.slice(shown, shown + PAGE).forEach((it, k) => {
     const n = shown + k, c = document.createElement("div"); c.className = "c" + (kept.has(it.p) ? " kept" : "");
     c.innerHTML = `<div class="top"><label class="pick"><input type="checkbox"${kept.has(it.p) ? " checked" : ""}><span class="nm"></span></label>
-      <button class="src cp" title="Paste into Finder: Go to Folder (Shift+Cmd+G)" style="height:24px;padding:0 8px;font-size:12px">Copy path</button><a class="src fold" target="_blank">Folder ↗</a>${it.used ? `<span class="badge">In a video</span>` : ""}${it.cam ? "" : `<span class="badge">Edited / export</span>`}</div>
+      <button class="src cp" title="Paste into Finder: Go to Folder (Shift+Cmd+G)" style="height:24px;padding:0 8px;font-size:12px">Copy path</button><button class="src pv" style="height:24px;padding:0 8px;font-size:12px">Preview ▶</button>${it.used ? `<span class="badge">In a video</span>` : ""}${it.cam ? "" : `<span class="badge">Edited / export</span>`}</div>
       <div class="th">${it.strip ? `<img loading="lazy" src="${it.strip}">` : `<span class="none">No preview</span>`}</div><div class="meta"></div>`;
     c.querySelector(".nm").textContent = it.rel.split("/").pop(); c.querySelector(".nm").title = it.p;
-    c.querySelector(".cp").onclick = () => navigator.clipboard.writeText(it.p).then(() => { const b = c.querySelector(".cp"); b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy path", 1200); }); c.querySelector("a.fold").href = url(it.p.split("/").slice(0, -1).join("/")) + "/";
+    c.querySelector(".cp").onclick = () => navigator.clipboard.writeText(it.p).then(() => { const b = c.querySelector(".cp"); b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy path", 1200); }); c.querySelector(".pv").onclick = () => open(n);
     c.querySelector(".meta").textContent = [fmt(it.dur), it.w ? `${it.w}×${it.h}` : "", gb(it.size), new Date(it.mtime * 1000).toLocaleDateString(), it.folder].filter(Boolean).join(" · ");
     c.querySelector(".pick input").onchange = () => toggle(it, c);
     c.querySelector(".th").onclick = () => open(n);
@@ -130,7 +130,7 @@ function toggle(it, c) {
 const bv = $("#bv");
 function open(n) {
   if (n < 0 || n >= list.length) return; cur = n; const it = list[n];
-  bv.src = url(it.p); bv.play().catch(() => {});
+  bv.src = location.protocol.startsWith("http") ? "/preview?p=" + encodeURIComponent(it.p) : url(it.p); bv.play().catch(() => {});
   $("#bn").textContent = it.p; $("#bck").checked = kept.has(it.p); $("#big").classList.add("on");
 }
 function close() { bv.pause(); bv.removeAttribute("src"); bv.load(); $("#big").classList.remove("on"); cur = -1; }
@@ -147,8 +147,9 @@ $("#copy").onclick = () => { const t = [...kept].join("\n");
   navigator.clipboard.writeText(t).then(() => { $("#copy").textContent = "Copied " + kept.size; setTimeout(() => $("#copy").textContent = "Copy checked list", 1500); }); };
 $("#build").onclick = () => {
   if (!kept.size) { $("#build").textContent = "Tick some clips first"; setTimeout(() => $("#build").textContent = "Save picks for Claude →", 1500); return; }
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({ root: DATA.root, picks: [...kept] }, null, 1)], { type: "application/json" }));
-  a.download = "broll-picks.json"; a.click();
+  const body = JSON.stringify({ root: DATA.root, picks: [...kept] }, null, 1);
+  fetch("/save", { method: "POST", body }).then(r => { if (!r.ok) throw 0; }).catch(() => {      // opened as a file: hand it over as a download instead
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([body], { type: "application/json" })); a.download = "broll-picks.json"; a.click(); });
   $("#build").textContent = `Sent ${kept.size} to Claude`;
   $("#sentH").textContent = `${kept.size} clips sent to Claude`; $("#sent").classList.add("on"); };
 $("#sentX").onclick = () => $("#sent").classList.remove("on");

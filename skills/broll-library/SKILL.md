@@ -38,13 +38,13 @@ Don't ask about talking: B-roll never keeps someone talking to camera, so add `"
 Save the answers to `~/B-Roll Sorter/rules.json`. Every reviewer below gets them word for word.
 
 ## 3 · They pick (they never type anything to move on)
-When the scan is done: `broll.py open scan.html`, then start `broll.py wait picks` **in the background** and end your turn with
+When the scan is done, start `broll.py serve picks` **in the background** (it opens the picker in Chrome from a small local server on
+this Mac and finishes the moment they press Save: no download, no save box), then end your turn with
 three lines: each strip is 4 frames of a clip; tick every clip with B-roll worth keeping ("Camera originals only" is on, so exports
 and edits are hidden); press **Save picks for Claude** when done, and you'll take it from there by yourself.
-When `wait picks` finishes, the picks are in `~/B-Roll Sorter/picks.json` ({root, picks}): go straight on, no check-in. 20-40 clips is a
+When `serve picks` finishes, the picks are in `~/B-Roll Sorter/picks.json` ({root, picks}): go straight on, no check-in. 20-40 clips is a
 good first run; if they picked over 80, say in one line it will take a while and use a lot of Claude usage, then go on with all of
-them unless they stop you. (If they type "picks saved" before the wait finishes, or the wait fails, find the newest
-`broll-picks*.json` with `mdfind -name broll-picks` and, failing that, ask where Chrome saved it.)
+them unless they stop you. (If the server couldn't start or they say they saved but nothing came, the page falls back to a download: run `broll.py wait picks`.)
 
 ## 4 · Prep
 `broll.py prep ~/B-Roll\ Sorter/picks.json`: light preview copies and an overview sheet per clip. Then it writes
@@ -77,14 +77,14 @@ Check the results yourself before going on: every `p` present, parts inside the 
 sheets against what was kept.
 
 ## 6 · They review (again, no typing to move on)
-`broll.py build`, `broll.py open build.html`, then start `broll.py wait edits` **in the background** and end your turn with four short lines:
+`broll.py build`, then start `broll.py serve edits` **in the background** (opens the review window, finishes when they press Done) and end your turn with four short lines:
 - Your picks are the green blocks under each clip: drag the middle to move one, drag an edge to trim, click ✕ to drop it; I and O mark a new one.
 - Notes are for anything else ("call it X", "put it in Travel").
 - "Skip this clip" if none of it is any good.
 - Press **Done: save for Claude** and I'll export everything by myself.
 
 ## 7 · Export
-When `wait edits` finishes, read `~/B-Roll Sorter/edits.json` (if it failed: the newest `broll-edits*.json` via `mdfind -name broll-edits`, then ask) ({clips: [{path, keep, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
+When `serve edits` finishes, read `~/B-Roll Sorter/edits.json` (if it fell back to a download: `broll.py wait edits`) ({clips: [{path, keep, notes, skip, by, claude}]}). Build `~/B-Roll Sorter/plan.json`:
 one entry per kept part, `{"src", "in", "out", "folder", "name": "<name> (<source file stem>)"}`, taking folder and
 names from `firstpass.json` and following anything in their notes (rename, a different folder, drop a part). A part they added gets
 a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 10-bit at full resolution, color untouched,

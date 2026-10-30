@@ -11,11 +11,12 @@
   build                                  Claude's checked picks (pass/doneN.json) into the review window (build.html)
   export  <plan.json>                    the finished clips, cut from the originals, sorted into the library, each one checked
   open    <page>                         open scan.html or build.html in the browser
-  wait    picks|edits                    wait for the page's Save button (the file it downloads), copy it into the work folder, exit
+  serve   picks|edits                    open the picker (picks) or review window (edits) from a local server; exits when they press Save
+  wait    picks|edits                    fallback: wait for a Save that came as a download instead, copy it into the work folder, exit
 
 Everything it makes lives in the work folder (~/B-Roll Sorter, or $BROLL_WORK). The footage is only ever read, never moved or changed.
 """
-import argparse, concurrent.futures as cf, hashlib, json, math, os, pathlib, platform, re, shutil, subprocess, sys, tempfile, time
+import argparse, http.server, threading, urllib.parse, concurrent.futures as cf, hashlib, json, math, os, pathlib, platform, re, shutil, subprocess, sys, tempfile, time
 
 HERE = pathlib.Path(__file__).resolve().parent
 WORK = pathlib.Path(os.environ.get("BROLL_WORK") or pathlib.Path.home() / "B-Roll Sorter")
@@ -217,6 +218,77 @@ def c_open(a):
     (WORK / f".opened-{a.page}").write_text(str(time.time()))
     say(f"Opened {p}")
 
+PORT = 47474      # fixed, so the browser keeps their in-progress edits (saved per address) between visits
+
+def c_serve(a):
+    page = "scan.html" if a.kind == "picks" else "build.html"
+    if not (WORK / page).exists(): sys.exit(f"No {WORK / page} yet")
+    ok = set()      # the only originals it will play or reveal: the clips on the page
+    if (WORK / "scan.json").exists(): ok |= {i["p"] for i in json.loads((WORK / "scan.json").read_text())["items"]}
+    if (WORK / "picks.json").exists():
+        pk = json.loads((WORK / "picks.json").read_text()); ok |= {x["p"] if isinstance(x, dict) else x for x in (pk.get("picks", []) if isinstance(pk, dict) else pk)}
+    done, got = threading.Event(), {}
+    class H(http.server.SimpleHTTPRequestHandler):
+        def __init__(s, *x, **k): super().__init__(*x, directory=str(WORK), **k)
+        def log_message(s, *x): pass
+        def send_head(s):      # Range support, so the players can scrub
+            u = urllib.parse.urlparse(s.path); q = urllib.parse.parse_qs(u.query)
+            if u.path == "/reveal":
+                f = q.get("p", [""])[0]
+                if f in ok: subprocess.run(["open", "-R", f] if MAC else ["xdg-open", str(pathlib.Path(f).parent)])
+                s.send_response(204); s.end_headers(); return None
+            if u.path == "/preview":      # a light copy made as it plays: the originals are often 10-bit, which Chrome can't play
+                f = q.get("p", [""])[0]
+                if f not in ok: s.send_error(403); return None
+                s.preview(f); return None
+            f = q.get("p", [""])[0] if u.path == "/orig" else s.translate_path(u.path)
+            if u.path == "/orig" and f not in ok: s.send_error(403); return None
+            if not os.path.isfile(f): return super().send_head()
+            size = os.path.getsize(f); r = re.match(r"bytes=(\d*)-(\d*)", s.headers.get("Range", ""))
+            a0, a1 = (int(r.group(1) or 0), int(r.group(2) or size - 1)) if r else (0, size - 1)
+            a1 = min(a1, size - 1); fh = open(f, "rb"); fh.seek(a0)
+            s.send_response(206 if r else 200); s.send_header("Content-Type", s.guess_type(f)); s.send_header("Accept-Ranges", "bytes")
+            s.send_header("Content-Length", str(a1 - a0 + 1))
+            if r: s.send_header("Content-Range", f"bytes {a0}-{a1}/{size}")
+            s.end_headers(); s.left = a1 - a0 + 1; return fh
+        def preview(s, f):
+            pr = subprocess.Popen(["ffmpeg", "-v", "error", "-i", f, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "scale=-2:360,format=yuv420p", *enc_h264(), "-g", "24",
+                                   "-c:a", "aac", "-b:a", "96k", "-movflags", "frag_keyframe+empty_moov+default_base_moof", "-f", "mp4", "pipe:1"], stdout=subprocess.PIPE)
+            s.send_response(200); s.send_header("Content-Type", "video/mp4"); s.send_header("Connection", "close"); s.end_headers(); s.close_connection = True
+            try:
+                while b := pr.stdout.read(1 << 16): s.wfile.write(b)
+            except (BrokenPipeError, ConnectionResetError): pass
+            finally: pr.kill()
+        def copyfile(s, src, dst):
+            left = getattr(s, "left", None)
+            while left is None or left > 0:
+                b = src.read(min(1 << 20, left) if left is not None else 1 << 20)
+                if not b: break
+                try: dst.write(b)
+                except (BrokenPipeError, ConnectionResetError): break
+                if left is not None: left -= len(b)
+        def do_POST(s):
+            if s.path != "/save": s.send_error(404); return
+            data = json.loads(s.rfile.read(int(s.headers.get("Content-Length", 0))) or b"{}")
+            (WORK / f"{a.kind}.json").write_text(json.dumps(data, indent=1)); got.update(data)
+            s.send_response(200); s.send_header("Content-Type", "application/json"); s.end_headers(); s.wfile.write(b'{"ok":true}'); done.set()
+    srv = None
+    for port in range(PORT, PORT + 20):
+        try: srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), H); break
+        except OSError: continue
+    if not srv: sys.exit("No free port for the page")
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    link = f"http://127.0.0.1:{srv.server_address[1]}/{page}"
+    if not a.no_open:
+        if MAC and pathlib.Path("/Applications/Google Chrome.app").exists(): subprocess.run(["open", "-a", "Google Chrome", link])
+        elif MAC: subprocess.run(["open", link])
+        elif platform.system() == "Windows": os.startfile(link)
+        else: subprocess.run(["xdg-open", link])
+    say(f"Opened {link}. Waiting for them to press " + ("Save picks" if a.kind == "picks" else "Done") + "...")
+    if not done.wait(4 * 3600): sys.exit(f"Nothing saved from {page} in 4 hours.")
+    time.sleep(1.5); srv.shutdown()
+    say(f"Saved: {len(got.get('picks') or got.get('clips') or [])} clips. In {WORK / (a.kind + '.json')}")
+
 def download_dirs():
     dirs = [pathlib.Path.home() / "Downloads"]      # and wherever Chrome was told to save
     sup = pathlib.Path.home() / ("Library/Application Support/Google/Chrome" if MAC else ".config/google-chrome")
@@ -258,6 +330,7 @@ if __name__ == "__main__":
     sp.add_parser("detail"); sp.add_parser("build")
     x = sp.add_parser("export"); x.add_argument("plan")
     x = sp.add_parser("open"); x.add_argument("page")
+    x = sp.add_parser("serve"); x.add_argument("kind", choices=["picks", "edits"]); x.add_argument("--no-open", action="store_true")
     x = sp.add_parser("wait"); x.add_argument("kind", choices=["picks", "edits"])
     a = ap.parse_args(); WORK.mkdir(parents=True, exist_ok=True)
-    {"config": c_config, "scan": c_scan, "prep": c_prep, "detail": c_detail, "build": c_build, "export": c_export, "open": c_open, "wait": c_wait}[a.cmd](a)
+    {"config": c_config, "scan": c_scan, "prep": c_prep, "detail": c_detail, "build": c_build, "export": c_export, "open": c_open, "serve": c_serve, "wait": c_wait}[a.cmd](a)

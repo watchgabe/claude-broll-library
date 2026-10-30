@@ -127,7 +127,7 @@ function show(i) {
   if (i < 0 || i >= picks.length) return; cur = i; pendIn = null; sel = null;
   const p = picks[i], m = META[p] || {}, e = ed(p);
   $("#main").innerHTML = `
-    <div class="title"><span class="n"></span><span class="p" title="The original file. You are scrubbing a light copy timed exactly like it."></span><button class="sm" id="cpath" title="Paste into Finder: Go to Folder (Shift+Cmd+G)">Copy path</button><a class="src" id="ofold" target="_blank">Folder ↗</a><button class="sm" id="prev">← Prev</button><button class="sm" id="next">Next →</button></div>
+    <div class="title"><span class="n"></span><span class="p" title="The original file. You are scrubbing a light copy timed exactly like it."></span><button class="sm" id="cpath" title="Paste into Finder: Go to Folder (Shift+Cmd+G)">Copy path</button><button class="sm" id="prev">← Prev</button><button class="sm" id="next">Next →</button></div>
     <div class="vid"><video id="v" controls playsinline muted preload="auto"></video></div>
     <div class="tl" id="tl"><div class="dim"></div></div>
     <div class="ctl">
@@ -142,9 +142,9 @@ function show(i) {
       <label class="ck"><input type="checkbox" id="skip">Skip this clip</label>
     </div>
     <div class="sec"><h3>Notes for this clip</h3><textarea id="notes" placeholder="e.g. take 0:12 to 0:18, slow it down, crop to 9:16, name it 'Laptop at the window'"></textarea></div>`;
-  $("#main .title .n").textContent = name(p); $("#main .title .p").textContent = p; $("#cpath").onclick = () => copyPath(p); $("#ofold").href = url(p.split("/").slice(0, -1).join("/")) + "/";
+  $("#main .title .n").textContent = name(p); $("#main .title .p").textContent = p; $("#cpath").onclick = () => copyPath(p);
   const v = $("#v"); v.muted = true;
-  v.src = m.proxy || url(p);
+  v.src = m.proxy || (location.protocol.startsWith("http") ? "/preview?p=" + encodeURIComponent(p) : url(p));
   if (m.strip) $("#tl").style.backgroundImage = `url("${m.strip}")`;
   $("#skip").checked = e.skip; $("#notes").value = e.notes;
   $("#skip").onchange = () => { e.skip = $("#skip").checked; e.by = "you"; save(); list(); };
@@ -253,8 +253,9 @@ function toast(t) { const d = $("#toast"); d.textContent = t; d.style.display = 
 $("#copyAll").onclick = () => navigator.clipboard.writeText(summary()).then(() => toast("Copied. Paste it to Claude"), () => toast("Couldn't copy. Use Save edits file"));
 $("#saveFile").onclick = () => {
   const data = { made: new Date().toISOString(), clips: picks.map(p => ({ path: p, ...(edits[p] || fresh(p)), claude: FIRST[p] || null })) };
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-  a.download = "broll-edits.json"; a.click();
+  const body = JSON.stringify(data, null, 2);
+  fetch("/save", { method: "POST", body }).then(r => { if (!r.ok) throw 0; }).catch(() => {      // opened as a file: hand it over as a download instead
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([body], { type: "application/json" })); a.download = "broll-edits.json"; a.click(); });
   const n = data.clips.filter(c => !c.skip).reduce((k, c) => k + (c.keep || []).length, 0);
   $("#sentH").textContent = `${n} clips sent to Claude`; $("#sent").classList.add("on");
 };
