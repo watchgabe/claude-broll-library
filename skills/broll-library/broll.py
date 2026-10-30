@@ -205,6 +205,7 @@ def c_export(a):
         for n, r in enumerate(ex.map(one, plan), 1):
             made.append(r); say(f"  {n}/{len(plan)} {'ok ' if r['ok'] else 'CHECK'} {r['out']}" + ("" if r["ok"] else f"  ({r.get('why') or 'start ' + str(r.get('start')) + ', first frame ' + str(r.get('first_frame_brightness'))})"))
     (WORK / "export_log.json").write_text(json.dumps(made, indent=1))
+    if MAC and any(r["ok"] for r in made): subprocess.run(["open", str(lib)])      # show them where it went
     say(f"{sum(r['ok'] for r in made)} of {len(made)} clips in {lib}" + ("" if all(r["ok"] for r in made) else ". Fix the ones marked CHECK before saying it's done."))
 
 def c_open(a):

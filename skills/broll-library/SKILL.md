@@ -23,14 +23,16 @@ Terminal, and wait), then `brew install ffmpeg-full uv`. Uninstall plain ffmpeg 
 Ask in one line, no question card: **"Which footage are we sorting? Click the + below, choose Add folder, pick the folder, then type go and
 press Enter."** (In Claude Code in a terminal there's no +: "drag the folder into this window and press Enter.")
 The folder they added shows up as an added working directory in your context; a dragged folder arrives as its path. Neither there?
-Ask them to drag it in. Then say in one line what you're scanning and where the finished clips go, and go on:
-- The library is a `B-Roll Library` folder at the top of the same drive (`/Volumes/<drive>/B-Roll Library`), or next to the folder
-  if it's on this Mac. Don't ask; "tell me if you want it somewhere else". `broll.py config --library "<that folder>"`.
+Ask them to drag it in. Then say in one line what you're scanning, and go on.
 - No color questions: this sorts and trims, it never grades. The clips come out with the camera's own color (log stays log).
 
 ## 2 · Scan, and their rules while it runs
 Start `broll.py scan "<folder>"` in the background (a folder of a few hundred clips takes a few minutes, a whole drive 20-30; say which in one line). While it runs, ask
-their rules in one AskUserQuestion call:
+their rules and where the clips go, in one AskUserQuestion call (four questions):
+- **Where should the finished clips go?** First option, the default: `B-Roll Library` at the top of the same drive
+  (`/Volumes/<drive>/B-Roll Library`, or next to the footage folder if it's on this Mac), described as "a new folder, sorted inside
+  by what's in each clip". Second: a `B-Roll` folder inside the footage folder they added. "Other": they add any folder with the +
+  (Add folder) or paste a path. Then `broll.py config --library "<that folder>"`.
 - **Looking at the camera:** Never (classic B-roll) / A glance is fine / Prefer it (vlog feel)
 - **Feel:** Clean B-roll (no gear or setup) / Behind the scenes welcome / Your call, clip by clip
 - **Part length:** About 10 s (6-15) / Short cutaways (3-5 s) / Long stretches (15-30 s)
@@ -91,7 +93,8 @@ a folder and name from what the clip is. Then `broll.py export plan.json` (HEVC 
 every file checked: starts at 0 and its first frame isn't black). Fix anything marked CHECK (move the start off a
 dark frame by 0.5 s and export that part again) before saying it's done.
 
-Finish with: how many clips in how many folders, where the library is, and one line on what to do next (drag the folder into their
+`broll.py export` opens the library folder in Finder when it's done. Finish with: how many clips in how many folders, the library
+as a clickable link (`[B-Roll Library](file:///Volumes/...)`, spaces as %20), and one line on what to do next (drag the folder into their
 editor, or run this again on another drive: clips they've already exported won't be overwritten).
 
 ## Rules that came from real runs
